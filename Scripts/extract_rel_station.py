@@ -4,7 +4,7 @@
 # @Email    : chaoqiezi.one@qq.com
 
 """
-This script is used to 基于站点ID提取相关因子数据
+This script is used to 基于站点ID提取相关因子和目标数据
 """
 
 import os.path
@@ -22,6 +22,7 @@ rainfall_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\模拟资料\尼
 streamflow_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\模拟资料\尼洋河数据\Streamflow.xlsx'
 factors_dir = r'H:\Datasets\Objects\StreamflowSimulation\Data\全国日气象数据1960-2016'
 log_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\match_station_log.txt'
+out_dir = r'H:\Datasets\Objects\StreamflowSimulation\Data\ReseachStationRel'
 factor_names = {
     'PRS': ['ID', 'lat', 'lon', 'dem', 'year', 'month', 'day', 'aver_prs', 'max_prs', 'min_prs', 'aver_q', 'max_q',
             'min_q'],
@@ -52,7 +53,7 @@ log_content = []
 
 # 读取数据集
 station = pd.read_excel(station_path)
-station = station[station['ID'] == 56312]  # 暂时仅有该站点的处理需求
+station = station[station['ID'] == 56312]  # 暂时仅有该站点的处理需求(临时)
 # 迭代月份
 alls = []  # 存储所有提取的数据
 for month in range(total_months):
@@ -109,8 +110,10 @@ alls['lat'] = alls['lat'].astype(str)
 alls['lon'] = alls['lon'].astype(str)
 alls['lat'] = alls.apply(lambda x: float(x['lat'][:2]) + float(x['lat'][2:]) / 60, axis=1)  # 十进制
 alls['lon'] = alls.apply(lambda x: float(x['lon'][:-2]) + float(x['lon'][-2:]) / 60, axis=1)
-# 匹配径流(streamflow)和降水(rainfall)
-rainfall = pd.read_excel(rainfall_path, )
+alls.to_excel(os.path.join(out_dir, 'meteorological_data.xlsx'), index=False)
+# # 匹配径流(streamflow)和降水(rainfall), 由于站点问题暂时不做
+# for row in station.itertuples():
+#     rainfall = pd.read_excel(rainfall_path, sheet_name=row.STNM)
 # 写入
 with open(log_path, 'w') as f:
     if not (log_content == []):
