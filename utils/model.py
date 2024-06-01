@@ -68,12 +68,12 @@ class LSTMModelFuture(nn.Module):
 def train_epoch(model, data_loader, optimizer, loss_func=nn.MSELoss(), pbar=None):
     """
     用于模型训练
-    :param model:
-    :param data_loader:
-    :param optimizer:
-    :param loss_func:
-    :param pbar:
-    :return:
+    :param model: 定义好的模型
+    :param data_loader: 数据加载器
+    :param optimizer: 优化器
+    :param loss_func: 损失函数
+    :param pbar: 进度条, 用于更新进度条显示内容
+    :return: 返回loss
     """
     model.train()  # 训练模式
 

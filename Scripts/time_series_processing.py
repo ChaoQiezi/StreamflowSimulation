@@ -7,12 +7,14 @@
 This script is used to 将各个特征项及其目标项的时间序列数据集进行整合、去除无效值、滤波等操作
 """
 
+import Config
+
 import os
 from datetime import datetime
 import pandas as pd
 from pykalman import KalmanFilter  # 卡尔曼滤波器
 from utils.utils import view_info, fast_viewing
-import Config
+
 
 # 准备
 era5_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\ERA5\Era5_2010_2015.xlsx'
@@ -63,7 +65,7 @@ fast_viewing(df, station_names, feature_target_names, save_path)
 # 进行卡尔曼滤波
 for station_name in station_names:
     observations = df.loc[df['站名'] == station_name, feature_names]
-    filter = filter = KalmanFilter(n_dim_obs=len(feature_names), n_dim_state=len(feature_names))  # 实例化滤波器
+    filter = KalmanFilter(n_dim_obs=len(feature_names), n_dim_state=len(feature_names))  # 实例化滤波器
     state_means, _ = filter.em(observations, n_iter=10).smooth(observations)
     df.loc[df['站名'] == station_name, feature_names] = state_means
 # 检查滤波后基本信息

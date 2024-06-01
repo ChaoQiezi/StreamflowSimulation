@@ -7,21 +7,24 @@
 This script is used to 存放常用工具和函数
 """
 
+import Config
+# 初始化参数
+from Config import split_time, seq_len_day, pred_len_day
+
 import os.path
 import h5py
 import joblib
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import matplotlib as mpl
 from matplotlib import pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 from typing import Union
 
-import Config
-# 初始化参数
-# split_time = datetime(2020, 7, 10)  # 划分时间节点, 5~7月为训练集, 8月为验证集, 约为3:1
-from Config import split_time, seq_len_day, pred_len_day
-
+mpl.rcParams['font.family'] = 'Microsoft YaHei'  # 设置字体(显示中文)
+mpl.rcParams['axes.unicode_minus'] = True  # 显示负号
 time_name = None
 
 
@@ -47,13 +50,14 @@ def create_xy_same(dataset, x_col_names: list, y_col_name: list, window_size=30,
             #     lambda x: str(x['st']) + '_' + x['ymdh'].strftime('%Y%m%d'), axis=1))
     xs = np.array(xs)
     ys = np.array(ys).squeeze(axis=-1)  # 去除最后一个形状大小为1的维度
-    ixs = np.array(ixs).squeeze()
+    ixs = np.array(ixs)
 
     # return train_x, train_y, train_ix
     return xs, ys, ixs
 
 
-def create_xy_future(dataset, x_col_names: list, y_col_name: list, window_size=seq_len_day, step_size=1, future_size=pred_len_day,
+def create_xy_future(dataset, x_col_names: list, y_col_name: list, window_size=seq_len_day, step_size=1,
+                     future_size=pred_len_day,
                      st_col_name='st', format_date='%Y%m%d%H'):
     """
     为时间序列基于滑动窗口生成样本, X和Y不同时期
@@ -77,15 +81,17 @@ def create_xy_future(dataset, x_col_names: list, y_col_name: list, window_size=s
             ys.append(cur_data.loc[y_start:y_end, y_col_name])
             # ixs.append(cur_data.loc[y_start:y_end, time_name])
             ixs.append(
-                cur_data.loc[y_start:y_end, :].apply(lambda x: str(x[st_col_name]) + '_' + x[time_name].strftime(format_date), axis=1))
+                cur_data.loc[y_start:y_end, :].apply(
+                    lambda x: str(x[st_col_name]) + '_' + x[time_name].strftime(format_date), axis=1))
     xs = np.array(xs)
-    ys = np.array(ys).squeeze(axis=-1)      # 去除最后一个形状大小为1的维度, 下同
-    ixs = np.array(ixs).squeeze()
+    ys = np.array(ys).squeeze(axis=-1)  # 去除最后一个形状大小为1的维度, 下同
+    ixs = np.array(ixs)
 
     return xs, ys, ixs
 
 
-def generate_samples(df, x_col_names: list, y_col_name: Union[str, list], out_path, time_col_name='date', format_date=None,
+def generate_samples(df, x_col_names: list, y_col_name: Union[str, list], out_path, time_col_name='date',
+                     format_date=None,
                      split_time=split_time, is_same_periods=False, model_fix='', **kwargs):
     """
     基于滑动窗口对时间序列数据集进行训练和测试样本的生成, 此外还进行了数据集的标准化
@@ -112,7 +118,7 @@ def generate_samples(df, x_col_names: list, y_col_name: Union[str, list], out_pa
     train_ds = df[df[time_col_name] < split_time]
     test_ds = df[df[time_col_name] >= split_time]
     # 标准化
-    train_ds, test_ds = normalize_xy(train_ds,  test_ds, x_col_names, y_col_name, scaler_path=Config.scalers_path,
+    train_ds, test_ds = normalize_xy(train_ds, test_ds, x_col_names, y_col_name, scaler_path=Config.scalers_path,
                                      model_fix=model_fix)
     # 特征项(x/features)和目标项(y/targets)划分
     if not is_same_periods:  # 基于过去的特征项预测未来的目标项
@@ -175,15 +181,111 @@ def view_info(df, col_names, min_value=-9999, max_value=9999):
 
 
 def fast_viewing(df, station_names, feature_names, out_path=None):
+    """
+    快速查看各个站点各个特征的图
+    :param df:
+    :param station_names:
+    :param feature_names:
+    :param out_path:
+    :return:
+    """
     fig, axs = plt.subplots(len(feature_names), len(station_names), figsize=(50, 50))
     for col_ix, station_name in enumerate(station_names):
         temp_df = df[df['站名'] == station_name]
         for row_ix, feature_name in enumerate(feature_names):
             ax = axs[row_ix, col_ix]
-            ax.plot(temp_df['date'], temp_df[feature_name])
+            sns.lineplot(x=temp_df['date'], y=temp_df[feature_name], ax=ax)
+            # ax.plot(temp_df['date'], temp_df[feature_name])
             ax.set_title('Times series line of {}-{}'.format(station_name, feature_name))
             ax.set_xlabel('Date')
             ax.set_ylabel(feature_name)
     if out_path is not None:
         fig.savefig(out_path, dpi=177)
     fig.show()
+
+
+def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
+    """
+    绘制预测结果和真实结果的折线图
+    :param x:
+    :param y_obs:
+    :param y_pred:
+    :param station_name:
+    :param save_path:
+    :return:
+    """
+    fig, axs = plt.subplots(3, 1, figsize=(19, 24))
+    ax_upper, ax_middle, ax_under = axs[0], axs[1], axs[2]
+
+    # 上部子图: 真实降雨
+    sns.lineplot(x=x, y=y_obs, ax=ax_upper, linewidth=2, color='#75813C', label='Real Precipitation')
+    ax_upper.set_xlabel('Date', fontsize=26)
+    ax_upper.set_title('The real precipitation of {}'.format(station_name), fontsize=30)
+    ax_upper.set_ylabel('Real precipitation', fontsize=26)
+    ax_upper.tick_params(axis='both', labelsize=18)
+    ax_upper.legend(fontsize=26, loc='upper right')
+
+    # 中部子图: 预测降雨
+    sns.lineplot(x=x, y=y_pred, ax=ax_middle, linewidth=2, color='#1E0785', label='Predicted Precipitation')
+    ax_middle.set_xlabel('Date', fontsize=26)
+    ax_middle.set_title('The predicted precipitation of {}'.format(station_name), fontsize=30)
+    ax_middle.set_ylabel('Predicted precipitation', fontsize=26)
+    ax_middle.tick_params(axis='both', labelsize=18)
+    ax_middle.legend(fontsize=26, loc='upper right')
+
+    # 底部子图: 真实和预测降雨
+    sns.lineplot(x=x, y=y_obs, ax=ax_under, linewidth=2, color='#75813C', label='Real Precipitation')
+    sns.lineplot(x=x, y=y_pred, ax=ax_under, linewidth=2, color='#1E0785', label='Predicted Precipitation')
+    ax_under.set_xlabel('Date', fontsize=26)
+    ax_under.set_title('The predicted and real precipitation of {}'.format(station_name), fontsize=30)
+    ax_under.set_ylabel('Predicted and real precipitation', fontsize=26)
+    ax_under.tick_params(axis='both', labelsize=18)
+    ax_under.legend(fontsize=26, loc='upper right')
+
+    # 输出
+    fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path)
+    fig.show()
+
+
+def plot_loss(loss_epochs):
+    """
+    绘制迭代损失
+    :param loss_epochs:
+    :return:
+    """
+    fig, ax = plt.subplots(figsize=(11, 7))
+    plt.plot(loss_epochs)
+    ax.set_xlabel('Epoch 次数', fontsize=24)
+    ax.set_ylabel('MSE Loss', fontsize=24)
+    ax.set_title('LSTM training loss diagram', fontsize=30)
+    ax.legend(['MSE Loss'], fontsize=18)
+    ax.tick_params(labelsize=16)
+    ax.grid(linestyle='--', alpha=0.6)
+    plt.show()
+
+
+def cal_nse(y_obs, y_pred):
+    """
+    计算纳什效率系数NSE
+    :param y_obs:
+    :param y_pred:
+    :return:
+    """
+
+    # 转换为np.numpy数组
+    y_obs = np.array(y_obs)
+    y_pred = np.array(y_pred)
+
+    # 计算观测值平均值
+    y_obs_mean = np.mean(y_obs)
+
+    # 计算分子分母
+    numerator = np.sum(np.power(y_obs - y_pred, 2))
+    denominator = np.sum(np.power(y_obs - y_obs_mean, 2))
+
+    # 计算NSE
+    nse = 1 - numerator / denominator
+
+    return nse

@@ -7,15 +7,17 @@
 This script is used to 作为配置文件, 存储基本参数、模型参数、基础路径等等变量以及初始化字体、创建初始文件夹等操作
 """
 
-import os.path
+import os
 import joblib
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+import seaborn as sns
 import torch
 from datetime import datetime
 
 # 设置相关
-plt.rcParams['font.family'] = 'Microsoft YaHei'  # 可正常显示中文
-plt.rcParams['axes.unicode_minus'] = True  # 显示正负号
+mpl.rcParams['font.family'] = 'Microsoft YaHei'  # 可正常显示中文
+mpl.rcParams['axes.unicode_minus'] = True  # 显示正负号
+sns.set_style('darkgrid')  # 设置绘制风格
 # plt.rcParams['font.family'] = 'Simhei'
 # plt.rcParams['font.family'] = 'Times New Roman'
 
@@ -38,8 +40,8 @@ pred_len_day = 1  # 预见期(day)
 # pred_len_hour = 1  # 预见期(hour)
 
 # 模型相关
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-num_epochs = 50  # 训练次数
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'  # 是否有显卡并加速模型训练
+num_epochs = 30  # 训练次数
 lr = 1e-4  # 学习率
 batch_size = 32  # 批次大小
 scalers_path = os.path.join(Assets_dir, 'scalers.pkl')  # 归一化器存储, 用于后续预测值的反归一化
