@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 import pandas as pd
 from pykalman import KalmanFilter  # 卡尔曼滤波器
-from utils.utils import view_info, fast_viewing
+from utils.utils import set_show_nan, fast_viewing
 
 
 # 准备
@@ -47,7 +47,7 @@ df['date'] = df.apply(lambda x: pd.to_datetime('{}{:02}{:02}'.format(x['年'], x
 df = df[['date', '纬度', '经度', '站名', '站号'] + feature_target_names]
 # 检查数据集的基本信息和无效值
 print('插值前: ')
-view_info(df, feature_target_names)
+set_show_nan(df, feature_target_names)
 # 快速浏览概况(绘制简单的折线图展示)
 save_path = os.path.join(Config.Assets_charts_dir, 'pre_interpolation_fast_view.png')
 fast_viewing(df, station_names, feature_target_names, save_path)
@@ -58,7 +58,7 @@ for station_name in station_names:
         method='polynomial', order=3)
 # 再次检查info和nan
 print('插值后: ')
-view_info(df, feature_target_names)
+set_show_nan(df, feature_target_names)
 # 再次快速浏览概况比对插值情况(绘制简单的折线图展示)
 save_path = os.path.join(Config.Assets_charts_dir, 'post_interpolation_fast_view.png')
 fast_viewing(df, station_names, feature_target_names, save_path)
@@ -70,7 +70,7 @@ for station_name in station_names:
     df.loc[df['站名'] == station_name, feature_names] = state_means
 # 检查滤波后基本信息
 print('滤波后: ')
-view_info(df, feature_target_names)
+set_show_nan(df, feature_target_names)
 # 再次快速浏览概况查看滤波情况
 save_path = os.path.join(Config.Assets_charts_dir, 'filtered_fast_view.png')
 fast_viewing(df, station_names, feature_names, save_path)

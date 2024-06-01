@@ -168,7 +168,15 @@ def normalize_xy(train_ds, test_ds, x_names: list, y_name: list, scaler_path='',
     return train_ds, test_ds
 
 
-def view_info(df, col_names, min_value=-9999, max_value=9999):
+def set_show_nan(df, col_names, min_value=-9999, max_value=9999):
+    """
+    设置无效值并打印无效值情况
+    :param df:
+    :param col_names:
+    :param min_value:
+    :param max_value:
+    :return:
+    """
     print('-' * 50)
     for col_name in col_names:
         df.loc[df[col_name] < min_value, col_name] = np.nan
@@ -178,6 +186,59 @@ def view_info(df, col_names, min_value=-9999, max_value=9999):
                                                                       df[col_name].min(), invalid_sum))
     print('总无效数量: {}'.format(df.isna().any(axis=1).sum()))
     print('-' * 50)
+
+
+def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None, test_y_shape=None, train_ix=None, test_ix=None):
+    """
+    打印样本数据集的基本情况
+    :param train_shape:
+    :param test_shape:
+    :param train_ix_shape:
+    :param test_ix_shape:
+    :return:
+    """
+
+    output = []
+    train_flag, test_flag = None, False
+
+    if (train_x_shape is not None) and (train_y_shape is not None):
+        output.append('-' * 50)
+        # 训练集特征项
+        train_size, seq_len, feature_size = train_x_shape
+        output.append('当前训练集特征项Shape: {};'.format(train_x_shape))
+        # 训练集目标项
+        output.append('当前训练集目标项Shape: {};'.format(train_y_shape))
+        pred_seq_len = train_y_shape[0]
+
+        output.append('单个样本特征数: {}'.format(feature_size))
+        output.append('预测期数: {} day'.format(pred_seq_len))
+
+        train_flag = True
+
+    if (test_x_shape is not None) and (test_y_shape is not None):
+        test_size, _, _ = test_x_shape
+        output.append('-' * 50)
+        output.append('当前测试集特征项Shape: {};'.format(test_x_shape))
+        output.append('当前测试集目标项Shape: {};'.format(test_y_shape))
+
+        test_flag = True
+
+    if train_flag and test_flag:
+        output.append('训练集数目: {}; 测试集数目: {}; 比例: {:0.2f}:1'.format(train_size, test_size, train_size / test_size))
+
+    if train_ix is not None:
+        train_start_date, train_end_date = train_ix['0_date'].min(), train_ix[f'{Config.pred_len_day - 1}_date'].max()
+        output.append('-' * 50)
+        output.append('训练集的时间范围: {} ~ {}'.format(train_start_date, train_end_date))
+    if test_ix is not None:
+        test_start_date, test_end_date = test_ix['0_date'].min(), test_ix[f'{Config.pred_len_day - 1}_date'].max()
+        output.append('-' * 50)
+        output.append('测试集的时间范围: {} ~ {}'.format(test_start_date, test_end_date))
+
+    output.append('-' * 50)
+    for line in output:
+        print(line)
+
 
 
 def fast_viewing(df, station_names, feature_names, out_path=None):
@@ -218,27 +279,27 @@ def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
     ax_upper, ax_middle, ax_under = axs[0], axs[1], axs[2]
 
     # 上部子图: 真实降雨
-    sns.lineplot(x=x, y=y_obs, ax=ax_upper, linewidth=2, color='#75813C', label='Real Precipitation')
+    sns.lineplot(x=x, y=y_obs, ax=ax_upper, linewidth=3, color='#75813C', label='Real Precipitation')
     ax_upper.set_xlabel('Date', fontsize=26)
     ax_upper.set_title('The real precipitation of {}'.format(station_name), fontsize=30)
-    ax_upper.set_ylabel('Real precipitation', fontsize=26)
+    ax_upper.set_ylabel('Real precipitation (mm)', fontsize=26)
     ax_upper.tick_params(axis='both', labelsize=18)
     ax_upper.legend(fontsize=26, loc='upper right')
 
     # 中部子图: 预测降雨
-    sns.lineplot(x=x, y=y_pred, ax=ax_middle, linewidth=2, color='#1E0785', label='Predicted Precipitation')
+    sns.lineplot(x=x, y=y_pred, ax=ax_middle, linewidth=3, color='#1E0785', label='Predicted Precipitation')
     ax_middle.set_xlabel('Date', fontsize=26)
     ax_middle.set_title('The predicted precipitation of {}'.format(station_name), fontsize=30)
-    ax_middle.set_ylabel('Predicted precipitation', fontsize=26)
+    ax_middle.set_ylabel('Predicted precipitation (mm)', fontsize=26)
     ax_middle.tick_params(axis='both', labelsize=18)
     ax_middle.legend(fontsize=26, loc='upper right')
 
     # 底部子图: 真实和预测降雨
-    sns.lineplot(x=x, y=y_obs, ax=ax_under, linewidth=2, color='#75813C', label='Real Precipitation')
-    sns.lineplot(x=x, y=y_pred, ax=ax_under, linewidth=2, color='#1E0785', label='Predicted Precipitation')
+    sns.lineplot(x=x, y=y_obs, ax=ax_under, linewidth=3, color='#75813C', label='Real Precipitation')
+    sns.lineplot(x=x, y=y_pred, ax=ax_under, linewidth=3, color='#1E0785', label='Predicted Precipitation')
     ax_under.set_xlabel('Date', fontsize=26)
     ax_under.set_title('The predicted and real precipitation of {}'.format(station_name), fontsize=30)
-    ax_under.set_ylabel('Predicted and real precipitation', fontsize=26)
+    ax_under.set_ylabel('Predicted and real precipitation (mm)', fontsize=26)
     ax_under.tick_params(axis='both', labelsize=18)
     ax_under.legend(fontsize=26, loc='upper right')
 
@@ -289,3 +350,23 @@ def cal_nse(y_obs, y_pred):
     nse = 1 - numerator / denominator
 
     return nse
+
+
+def decode_time_col(time_col, sep='_'):
+    """
+    用于对字符串型时间列进行解码和分割
+    :param time_col: 待处理的时间数组
+    :param sep: 分割符,默认_(下划线)
+    :return: 返回处理好的时间数据集(pd.Dataframe)
+    """
+    # 解码
+    time_col = np.vectorize(lambda x: x.decode('utf-8'))(time_col)
+    time_col = pd.DataFrame(time_col)
+    # 分割
+    col_names = time_col.columns
+    for col_name in col_names:
+        cur_date_name = '{}_date'.format(col_name)
+        time_col[['站名', cur_date_name]] = time_col[col_name].str.split(sep, expand=True)
+        time_col[cur_date_name] = pd.to_datetime(time_col[cur_date_name], format='%Y%m%d%H')
+        del time_col[col_name]
+    return time_col

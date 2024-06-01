@@ -44,7 +44,7 @@ import torch.nn as nn
 
 
 class LSTMModelFuture(nn.Module):
-    def __init__(self, input_size=15, hidden_size=512, output_size=1, num_layers=3, dropout_rate=0):
+    def __init__(self, input_size, hidden_size=512, output_size=1, num_layers=3, dropout_rate=0.1):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, dropout=dropout_rate)
         self.regression = nn.Sequential(

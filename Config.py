@@ -10,6 +10,7 @@ This script is used to 作为配置文件, 存储基本参数、模型参数、�
 import os
 import joblib
 import matplotlib as mpl
+import numpy as np
 import seaborn as sns
 import torch
 from datetime import datetime
@@ -32,10 +33,11 @@ station_names = ['巴河桥', '更张', '工布江达']
 feature_names = ['气温', '气压', '相对湿度', '风速', '日照', '地温', '降水量']
 target_name = ['平均流量']
 feature_target_names = ['气温', '气压', '相对湿度', '风速', '日照', '地温', '降水量', '平均流量']
+feature_size = len(feature_names)
 # 数据集划分相关
 split_time = datetime(2014, 1, 1)  # 数据集的划分时间节点
 seq_len_day = 210  # 记忆时间(时间分辨率: day)
-pred_len_day = 1  # 预见期(day)
+pred_len_day = 2  # 预见期(day)
 # seq_len_hour = 96  # 记忆时间(时间分辨率: hour)
 # pred_len_hour = 1  # 预见期(hour)
 
@@ -44,6 +46,7 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'  # 是否有显卡并加
 num_epochs = 30  # 训练次数
 lr = 1e-4  # 学习率
 batch_size = 32  # 批次大小
+best_loss = np.inf
 scalers_path = os.path.join(Assets_dir, 'scalers.pkl')  # 归一化器存储, 用于后续预测值的反归一化
 if not os.path.exists(scalers_path):
     joblib.dump({}, scalers_path)

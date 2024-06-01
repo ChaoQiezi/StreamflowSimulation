@@ -13,7 +13,7 @@ import Config
 
 # 准备
 time_series_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\preprocessed_features_target.xlsx'
-out_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test.h5'
+out_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test_2day.h5'
 
 # 读取
 df = pd.read_excel(time_series_path)
