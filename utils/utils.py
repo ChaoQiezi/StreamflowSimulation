@@ -225,7 +225,8 @@ def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None,
         test_flag = True
 
     if train_flag and test_flag:
-        output.append('训练集数目: {}; 测试集数目: {}; 比例: {:0.2f}:1'.format(train_size, test_size, train_size / test_size))
+        output.append(
+            '训练集数目: {}; 测试集数目: {}; 比例: {:0.2f}:1'.format(train_size, test_size, train_size / test_size))
 
     if train_ix is not None:
         train_start_date, train_end_date = train_ix['0_date'].min(), train_ix[f'{pred_len_day - 1}_date'].max()
@@ -239,7 +240,6 @@ def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None,
     output.append('-' * 50)
     for line in output:
         print(line)
-
 
 
 def fast_viewing(df, station_names, feature_names, out_path=None):
@@ -263,7 +263,8 @@ def fast_viewing(df, station_names, feature_names, out_path=None):
             ax.set_ylabel(feature_name)
     if out_path is not None:
         fig.savefig(out_path, dpi=177)
-    fig.show()
+    # fig.show()  # 大批量制图请将其关闭
+    plt.close(fig)  # 显式关闭
 
 
 def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
@@ -280,27 +281,27 @@ def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
     ax_upper, ax_middle, ax_under = axs[0], axs[1], axs[2]
 
     # 上部子图: 真实降雨
-    sns.lineplot(x=x, y=y_obs, ax=ax_upper, linewidth=3, color='#75813C', label='Real Precipitation')
+    sns.lineplot(x=x, y=y_obs, ax=ax_upper, linewidth=3, color='#75813C', label='Real Streamflow')
     ax_upper.set_xlabel('Date', fontsize=26)
-    ax_upper.set_title('The real precipitation of {}'.format(station_name), fontsize=30)
-    ax_upper.set_ylabel('Real precipitation (mm)', fontsize=26)
+    ax_upper.set_title('The real streamflow of {}'.format(station_name), fontsize=30)
+    ax_upper.set_ylabel('Real streamflow (mm)', fontsize=26)
     ax_upper.tick_params(axis='both', labelsize=18)
     ax_upper.legend(fontsize=26, loc='upper right')
 
     # 中部子图: 预测降雨
-    sns.lineplot(x=x, y=y_pred, ax=ax_middle, linewidth=3, color='#1E0785', label='Predicted Precipitation')
+    sns.lineplot(x=x, y=y_pred, ax=ax_middle, linewidth=3, color='#1E0785', label='Predicted Streamflow')
     ax_middle.set_xlabel('Date', fontsize=26)
-    ax_middle.set_title('The predicted precipitation of {}'.format(station_name), fontsize=30)
-    ax_middle.set_ylabel('Predicted precipitation (mm)', fontsize=26)
+    ax_middle.set_title('The predicted streamflow of {}'.format(station_name), fontsize=30)
+    ax_middle.set_ylabel('Predicted streamflow (mm)', fontsize=26)
     ax_middle.tick_params(axis='both', labelsize=18)
     ax_middle.legend(fontsize=26, loc='upper right')
 
     # 底部子图: 真实和预测降雨
-    sns.lineplot(x=x, y=y_obs, ax=ax_under, linewidth=3, color='#75813C', label='Real Precipitation')
-    sns.lineplot(x=x, y=y_pred, ax=ax_under, linewidth=3, color='#1E0785', label='Predicted Precipitation')
+    sns.lineplot(x=x, y=y_obs, ax=ax_under, linewidth=3, color='#75813C', label='Real Streamflow')
+    sns.lineplot(x=x, y=y_pred, ax=ax_under, linewidth=3, color='#1E0785', label='Predicted Streamflow')
     ax_under.set_xlabel('Date', fontsize=26)
-    ax_under.set_title('The predicted and real precipitation of {}'.format(station_name), fontsize=30)
-    ax_under.set_ylabel('Predicted and real precipitation (mm)', fontsize=26)
+    ax_under.set_title('The predicted and real streamflow of {}'.format(station_name), fontsize=30)
+    ax_under.set_ylabel('Predicted and real streamflow (mm)', fontsize=26)
     ax_under.tick_params(axis='both', labelsize=18)
     ax_under.legend(fontsize=26, loc='upper right')
 
@@ -308,7 +309,8 @@ def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
     fig.tight_layout()
     if save_path is not None:
         fig.savefig(save_path)
-    fig.show()
+    # fig.show()  # 大批量制图请将其注释
+    plt.close(fig)
 
 
 def plot_loss(loss_epochs, save_path=None):
@@ -328,7 +330,8 @@ def plot_loss(loss_epochs, save_path=None):
 
     if save_path is not None:
         plt.savefig(save_path)
-    plt.show()
+    # plt.show()  # 大批量制图请将其关闭
+    plt.close(fig)
 
 
 def cal_nse(y_obs, y_pred):

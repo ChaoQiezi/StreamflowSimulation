@@ -69,18 +69,22 @@ def train(seq_len_day=210, pred_len_day=1):
     summary(model, input_data=(seq_len_day, Config.feature_size))  # 输入(samples_num<忽略不传入>, 时间步, 特征项数)输出模型结构
     criterion = nn.MSELoss()  # 损失函数
     optimizer = torch.optim.Adam(model.parameters(), lr=Config.lr)  # 优化器
-    # 训练模型
-    loss_epochs = []
-    pbar = tqdm.tqdm(range(Config.num_epochs))
-    for epoch in pbar:
-        pbar.set_description('Epoch: {:03}'.format(epoch))
-        loss_epochs.append(train_epoch(model, train_ds_loader, optimizer, criterion, pbar))
-    torch.save(model.state_dict(), save_model_path)  # 保存模型
 
-    # 输出模型训练情况
-    # 绘制迭代损失情况
-    save_loss_path = os.path.join(Config.result_dir, 'train_loss_m{}day_p{}day.png'.format(seq_len_day, pred_len_day))
-    plot_loss(loss_epochs, save_path=save_loss_path)
+    # 为减少训练时间, 若存在已训练好的模型则跳过模型训练部分
+    if not os.path.exists(save_model_path):
+        # 训练模型
+        loss_epochs = []
+        pbar = tqdm.tqdm(range(Config.num_epochs))
+        for epoch in pbar:
+            pbar.set_description('Epoch: {:03}'.format(epoch))
+            loss_epochs.append(train_epoch(model, train_ds_loader, optimizer, criterion, pbar))
+        torch.save(model.state_dict(), save_model_path)  # 保存模型
+
+        # 输出模型训练情况
+        # 绘制迭代损失情况
+        save_loss_path = os.path.join(Config.result_dir, 'train_loss_m{}day_p{}day.png'.format(seq_len_day, pred_len_day))
+        plot_loss(loss_epochs, save_path=save_loss_path)
+
     # 绘制拟合情况和评估
     model.load_state_dict(torch.load(save_model_path))  # 加载存储模型
     model.eval()  # 评估模式

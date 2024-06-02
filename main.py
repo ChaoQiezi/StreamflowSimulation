@@ -12,9 +12,12 @@ from Scripts.train import train
 from Scripts.eval import eval
 
 import numpy as np
+import tqdm
+import time
 
-memory_days = np.arange(150, 360, 20)  # 生成记忆期列表
-predict_days = np.arange(1, 14)  # 生成预见期列表
+start_time = time.time()
+memory_days = np.arange(150, 380, 20)  # 生成记忆期列表
+predict_days = np.arange(1, 15)  # 生成预见期列表
 
 if __name__ == '__main__':
     for seq_len_day in memory_days:
@@ -22,4 +25,6 @@ if __name__ == '__main__':
             generate_time_series_samples(seq_len_day, pred_len_day)
             train(seq_len_day, pred_len_day)
             eval(seq_len_day, pred_len_day)
-    print('主程序结束.')
+
+    end_time = time.time()
+    print('主程序结束(耗时: {:0.2f} min).'.format((end_time - start_time) / 60))
