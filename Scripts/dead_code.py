@@ -4,7 +4,7 @@
 # @Email    : chaoqiezi.one@qq.com
 
 """
-This script is used to 读取
+This script is used to 存放临时无效代码
 """
 
 import numpy as np

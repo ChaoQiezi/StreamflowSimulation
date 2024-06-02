@@ -1,3 +1,13 @@
+# @Author   : ChaoQiezi
+# @Time     : 2024/4/22  21:01
+# @FileName : dead_code.py
+# @Email    : chaoqiezi.one@qq.com
+
+"""
+This script is used to 从官网批量下载ERA5数据集
+"""
+
+
 import cdstoolbox as ct
 
 layout = {

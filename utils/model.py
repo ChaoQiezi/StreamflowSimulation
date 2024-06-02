@@ -4,7 +4,7 @@
 # @Email    : chaoqiezi.one@qq.com
 
 """
-This script is used to 存放相关模型等
+This script is used to 存放模型相关等类和函数
 """
 
 import h5py
