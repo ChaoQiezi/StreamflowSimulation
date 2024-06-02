@@ -22,6 +22,13 @@ import torch
 
 
 def eval(seq_len_day=210, pred_len_day=1):
+    """
+    模型预测和评估
+    :param seq_len_day: 记忆期
+    :param pred_len_day: 预见期
+    :return: None
+    """
+
     print('_' * 50)
     print('记忆期: {} day; 预见期: {} day;  评估中······'.format(seq_len_day, pred_len_day))
     print('_' * 50)

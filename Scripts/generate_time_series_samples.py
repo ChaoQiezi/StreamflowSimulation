@@ -6,8 +6,8 @@
 """
 This script is used to 从time_series_processing.py预处理好的时间序列数据集中生成可供后续模型输入训练的样本集
 """
-import os.path
 
+import os
 import h5py
 import pandas as pd
 from utils.utils import generate_samples  # 生成样本
@@ -15,6 +15,13 @@ import Config
 
 
 def generate_time_series_samples(seq_len_day=210, pred_len_day=1):
+    """
+    生成时间序列的样本供模型输入
+    :param seq_len_day: 记忆期
+    :param pred_len_day: 预测期
+    :return: None
+    """
+
     print('_' * 50)
     print('记忆期: {} day; 预见期: {} day;  生成样本中······'.format(seq_len_day, pred_len_day))
     print('_' * 50)

@@ -41,6 +41,13 @@ from sklearn.metrics import r2_score, mean_squared_log_error
 
 
 def train(seq_len_day=210, pred_len_day=1):
+    """
+    模型训练
+    :param seq_len_day: 记忆期
+    :param pred_len_day: 预见期
+    :return: None
+    """
+
     print('_' * 50)
     print('记忆期: {} day; 预见期: {} day;  训练中······'.format(seq_len_day, pred_len_day))
     print('_' * 50)
