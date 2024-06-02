@@ -79,7 +79,7 @@ model.eval()  # 评估模式
 with torch.no_grad():
     for station_name in Config.station_names:
         # 预测
-        temp_ix = train_ix[train_ix['站名'] == station_name]['date']
+        temp_ix = train_ix[train_ix['站名'] == station_name][[x for x in train_ix.columns if x != '站名']]
         temp_x = train_x[train_ix['站名'] == station_name].to(Config.DEVICE)
         temp_y_obs = train_y[train_ix['站名'] == station_name].squeeze()
         temp_y_pred = model(temp_x).detach().cpu().numpy().squeeze()
@@ -92,12 +92,28 @@ with torch.no_grad():
             pd.DataFrame(temp_y_obs)).squeeze()
         temp_y_pred = scalers['model__y_scaler'].inverse_transform(
             pd.DataFrame(temp_y_pred)).squeeze()
-        # 绘制
-        save_path = os.path.join(Config.Assets_charts_dir, 'pred_real_train_{}.png'.format(station_name))
-        plot_comparison(temp_ix, temp_y_obs, temp_y_pred, station_name, save_path=save_path)
         # 计算训练集的评估指标
         r2 = r2_score(temp_y_obs, temp_y_pred)
         rmse = mean_squared_log_error(temp_y_obs, temp_y_pred)
         nse = cal_nse(temp_y_obs, temp_y_pred)
         print('训练集评估结果--站名: {}; R2: {:0.2}; RMSE: {:0.2}; NSE: {:0.2}'.format(station_name, r2, rmse, nse))
+        # 绘制
+        # 合并重叠部分(简单均值)
+        combined_obss =
+        combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
+        counts = np.zeros_like(combined_preds)
+        for ix, line in enumerate(temp_y_pred):
+            combined_preds[ix:ix+Config.pred_len_day] += line
+            counts[ix:ix+Config.pred_len_day] += 1
+        combined_preds /= counts
+
+        combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
+        counts = np.zeros_like(combined_obss)
+        for ix, line in enumerate(temp_y_obs):
+            combined_obss[ix:ix + Config.pred_len_day] += line
+            counts[ix:ix + Config.pred_len_day] += 1
+        combined_obss /= counts
+
+        save_path = os.path.join(Config.Assets_charts_dir, 'pred_real_train_{}.png'.format(station_name))
+        plot_comparison(temp_ix.loc[:, '0_date'], combined_obss[:-1], combined_preds[:-1], station_name, save_path=save_path)
 print('模型训练结束.')

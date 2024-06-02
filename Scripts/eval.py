@@ -49,7 +49,8 @@ with torch.no_grad():
     with pd.ExcelWriter(pred_obs_path, mode='w', engine='openpyxl') as writer:
         for station_name in Config.station_names:
             # 预测
-            temp_ix = train_ix[train_ix['站名'] == station_name]['date']
+            # temp_ix = train_ix[train_ix['站名'] == station_name]['date']
+            temp_ix = train_ix[train_ix['站名'] == station_name][[x for x in train_ix.columns if x != '站名']]
             temp_x = train_x[train_ix['站名'] == station_name].to(Config.DEVICE)
             temp_y_obs = train_y[train_ix['站名'] == station_name].detach().cpu().numpy().squeeze()
             temp_y_pred = model(temp_x).detach().cpu().numpy().squeeze()
@@ -67,6 +68,21 @@ with torch.no_grad():
             nse = cal_nse(temp_y_obs, temp_y_pred)
             eval_indicators[station_name] = [r2, rmse, mae, nse]
             # 绘制
+            # 合并重叠部分
+            combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
+            counts = np.zeros_like(combined_preds)
+            for ix, line in enumerate(temp_y_pred):
+                combined_preds[ix:ix + Config.pred_len_day] += line
+                counts[ix:ix + Config.pred_len_day] += 1
+            combined_preds /= counts
+
+            combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
+            counts = np.zeros_like(combined_obss)
+            for ix, line in enumerate(temp_y_obs):
+                combined_obss[ix:ix + Config.pred_len_day] += line
+                counts[ix:ix + Config.pred_len_day] += 1
+            combined_obss /= counts
+
             save_path = os.path.join(Config.Assets_charts_dir, 'pred_obs_test_{}.png'.format(station_name))
             plot_comparison(temp_ix, temp_y_obs, temp_y_pred, station_name, save_path=save_path)
             # 存储结果
