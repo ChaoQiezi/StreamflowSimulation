@@ -52,15 +52,15 @@ with torch.no_grad():
             # temp_ix = train_ix[train_ix['站名'] == station_name]['date']
             temp_ix = train_ix[train_ix['站名'] == station_name][[x for x in train_ix.columns if x != '站名']]
             temp_x = train_x[train_ix['站名'] == station_name].to(Config.DEVICE)
-            temp_y_obs = train_y[train_ix['站名'] == station_name].detach().cpu().numpy().squeeze()
-            temp_y_pred = model(temp_x).detach().cpu().numpy().squeeze()
+            temp_y_obs = train_y[train_ix['站名'] == station_name].detach().cpu().numpy()
+            temp_y_pred = model(temp_x).detach().cpu().numpy()
             temp_y_pred[temp_y_pred < 0] = 0  # 负数替换为0
             # 反归一化
             scalers = joblib.load(Config.scalers_path)  # 加载标准化器
             temp_y_obs = scalers['model__y_scaler'].inverse_transform(
-                pd.DataFrame(temp_y_obs)).squeeze()
+                pd.DataFrame(temp_y_obs))
             temp_y_pred = scalers['model__y_scaler'].inverse_transform(
-                pd.DataFrame(temp_y_pred)).squeeze()
+                pd.DataFrame(temp_y_pred))
             # 计算评估指标
             r2 = r2_score(temp_y_obs, temp_y_pred)
             rmse = mean_squared_log_error(temp_y_obs, temp_y_pred)

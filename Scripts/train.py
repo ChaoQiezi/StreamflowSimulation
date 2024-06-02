@@ -89,14 +89,14 @@ with torch.no_grad():
         # temp_y_obs = scalers['model__y_scaler'].inverse_transform(pd.DataFrame({Config.target_name[0]: temp_y_obs})).squeeze()
         # temp_y_pred = scalers['model__y_scaler'].inverse_transform(pd.DataFrame({Config.target_name[0]: temp_y_pred})).squeeze()
         temp_y_obs = scalers['model__y_scaler'].inverse_transform(
-            pd.DataFrame(temp_y_obs)).squeeze()
+            pd.DataFrame(temp_y_obs))
         temp_y_pred = scalers['model__y_scaler'].inverse_transform(
-            pd.DataFrame(temp_y_pred)).squeeze()
+            pd.DataFrame(temp_y_pred))
         # 计算训练集的评估指标
         r2 = r2_score(temp_y_obs, temp_y_pred)
         rmse = mean_squared_log_error(temp_y_obs, temp_y_pred)
         nse = cal_nse(temp_y_obs, temp_y_pred)
-        print('训练集评估结果--站名: {}; R2: {:0.2}; RMSE: {:0.2}; NSE: {:0.2}'.format(station_name, r2, rmse, nse))
+        print('训练集评估结果--站名: {}; R2: {:0.4f}; RMSE: {:0.4f}; NSE: {:0.4f}'.format(station_name, r2, rmse, nse))
         # 绘制
         # 合并重叠部分(简单均值)
         temp_y_pred = pd.DataFrame(temp_y_pred)
