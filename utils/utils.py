@@ -188,7 +188,8 @@ def set_show_nan(df, col_names, min_value=-9999, max_value=9999):
     print('-' * 50)
 
 
-def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None, test_y_shape=None, train_ix=None, test_ix=None):
+def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None, test_y_shape=None, train_ix=None,
+                      test_ix=None, pred_len_day=Config.pred_len_day):
     """
     打印样本数据集的基本情况
     :param train_shape:
@@ -227,11 +228,11 @@ def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None,
         output.append('训练集数目: {}; 测试集数目: {}; 比例: {:0.2f}:1'.format(train_size, test_size, train_size / test_size))
 
     if train_ix is not None:
-        train_start_date, train_end_date = train_ix['0_date'].min(), train_ix[f'{Config.pred_len_day - 1}_date'].max()
+        train_start_date, train_end_date = train_ix['0_date'].min(), train_ix[f'{pred_len_day - 1}_date'].max()
         output.append('-' * 50)
         output.append('训练集的时间范围: {} ~ {}'.format(train_start_date, train_end_date))
     if test_ix is not None:
-        test_start_date, test_end_date = test_ix['0_date'].min(), test_ix[f'{Config.pred_len_day - 1}_date'].max()
+        test_start_date, test_end_date = test_ix['0_date'].min(), test_ix[f'{pred_len_day - 1}_date'].max()
         output.append('-' * 50)
         output.append('测试集的时间范围: {} ~ {}'.format(test_start_date, test_end_date))
 
@@ -310,7 +311,7 @@ def plot_comparison(x, y_obs, y_pred, station_name, save_path=None):
     fig.show()
 
 
-def plot_loss(loss_epochs):
+def plot_loss(loss_epochs, save_path=None):
     """
     绘制迭代损失
     :param loss_epochs:
@@ -324,6 +325,9 @@ def plot_loss(loss_epochs):
     ax.legend(['MSE Loss'], fontsize=18)
     ax.tick_params(labelsize=16)
     ax.grid(linestyle='--', alpha=0.6)
+
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()
 
 

@@ -27,6 +27,9 @@ Assets_dir = r'I:\PyProJect\StreamflowSimulation\Assets'
 Assets_charts_dir = os.path.join(Assets_dir, 'Charts')
 if not os.path.exists(Assets_charts_dir):
     os.makedirs(Assets_charts_dir)
+samples_dir = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples'  # 存储训练和预测样本文件(.h5)的目录
+models_dir = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\ModelStorage'  # 存储训练好的模型的目录
+result_dir = r'H:\Datasets\Objects\StreamflowSimulation\Data\Result'  # 输出图表等结果的目录
 
 # 数据基本信息相关
 station_names = ['巴河桥', '更张', '工布江达']
