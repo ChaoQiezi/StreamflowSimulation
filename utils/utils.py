@@ -208,7 +208,7 @@ def show_samples_info(train_x_shape=None, train_y_shape=None, test_x_shape=None,
         output.append('当前训练集特征项Shape: {};'.format(train_x_shape))
         # 训练集目标项
         output.append('当前训练集目标项Shape: {};'.format(train_y_shape))
-        pred_seq_len = train_y_shape[0]
+        pred_seq_len = train_y_shape[1]
 
         output.append('单个样本特征数: {}'.format(feature_size))
         output.append('预测期数: {} day'.format(pred_seq_len))

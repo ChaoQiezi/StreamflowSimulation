@@ -21,10 +21,10 @@ import pandas as pd
 import torch
 
 # 准备
-samples_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test.h5'
-model_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\ModelStorage\model_V01.pth'
-pred_obs_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\Result\pred_obs.xlsx'
-eval_indicator_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\Result\eval_indicators.xlsx'
+samples_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test_{}day.h5'.format(Config.pred_len_day)
+model_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\ModelStorage\model_{}day.pth'.format(Config.pred_len_day)
+pred_obs_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\Result\pred_obs_{}day.xlsx'.format(Config.pred_len_day)
+eval_indicator_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\Result\eval_indicators_{}day.xlsx'.format(Config.pred_len_day)
 
 # 读取样本
 with h5py.File(samples_path) as f:
@@ -41,7 +41,7 @@ with h5py.File(samples_path) as f:
 # 获取和输出数据集基本信息
 show_samples_info(train_x.shape, train_y.shape, test_x.shape, test_y.shape, train_ix, test_ix)
 # 评估
-model = LSTMModelFuture(Config.feature_size, output_size=1).to(Config.DEVICE)
+model = LSTMModelFuture(Config.feature_size, output_size=Config.pred_len_day).to(Config.DEVICE)
 model.load_state_dict(torch.load(model_path))  # 加载模型
 model.eval()  # 评估模式
 eval_indicators = {}
@@ -58,9 +58,9 @@ with torch.no_grad():
             # 反归一化
             scalers = joblib.load(Config.scalers_path)  # 加载标准化器
             temp_y_obs = scalers['model__y_scaler'].inverse_transform(
-                pd.DataFrame({Config.target_name[0]: temp_y_obs})).squeeze()
+                pd.DataFrame(temp_y_obs)).squeeze()
             temp_y_pred = scalers['model__y_scaler'].inverse_transform(
-                pd.DataFrame({Config.target_name[0]: temp_y_pred})).squeeze()
+                pd.DataFrame(temp_y_pred)).squeeze()
             # 计算评估指标
             r2 = r2_score(temp_y_obs, temp_y_pred)
             rmse = mean_squared_log_error(temp_y_obs, temp_y_pred)
@@ -68,20 +68,26 @@ with torch.no_grad():
             nse = cal_nse(temp_y_obs, temp_y_pred)
             eval_indicators[station_name] = [r2, rmse, mae, nse]
             # 绘制
-            # 合并重叠部分
-            combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
-            counts = np.zeros_like(combined_preds)
-            for ix, line in enumerate(temp_y_pred):
-                combined_preds[ix:ix + Config.pred_len_day] += line
-                counts[ix:ix + Config.pred_len_day] += 1
-            combined_preds /= counts
-
-            combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
-            counts = np.zeros_like(combined_obss)
-            for ix, line in enumerate(temp_y_obs):
-                combined_obss[ix:ix + Config.pred_len_day] += line
-                counts[ix:ix + Config.pred_len_day] += 1
-            combined_obss /= counts
+            # 合并重叠部分(简单均值)
+            temp_y_pred = pd.DataFrame(temp_y_pred)
+            for ix in range(temp_y_pred.shape[1]):
+                temp_y_pred[ix] = temp_y_pred[ix].shift(ix)
+            temp_y_pred = np.nanmean(temp_y_pred, axis=1)
+            temp_y_obs = temp_y_obs[:, 0]  # 直接取第一列即可
+            temp_ix = temp_ix['0_date']
+            # combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
+            # counts = np.zeros_like(combined_preds)
+            # for ix, line in enumerate(temp_y_pred):
+            #     combined_preds[ix:ix + Config.pred_len_day] += line
+            #     counts[ix:ix + Config.pred_len_day] += 1
+            # combined_preds /= counts
+            #
+            # combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
+            # counts = np.zeros_like(combined_obss)
+            # for ix, line in enumerate(temp_y_obs):
+            #     combined_obss[ix:ix + Config.pred_len_day] += line
+            #     counts[ix:ix + Config.pred_len_day] += 1
+            # combined_obss /= counts
 
             save_path = os.path.join(Config.Assets_charts_dir, 'pred_obs_test_{}.png'.format(station_name))
             plot_comparison(temp_ix, temp_y_obs, temp_y_pred, station_name, save_path=save_path)
@@ -100,3 +106,7 @@ with torch.no_grad():
 eval_indicators = pd.DataFrame(eval_indicators).transpose()
 eval_indicators.columns = ['R2', 'RMSE', 'MAE', 'NSE']
 eval_indicators.to_excel(eval_indicator_path)
+print('-' * 50)
+print(eval_indicators)
+print('-' * 50)
+print('模型评估结束.')

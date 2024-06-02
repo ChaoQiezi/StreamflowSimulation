@@ -40,8 +40,8 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.metrics import r2_score, mean_squared_log_error
 
 # 准备
-samples_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test_2day.h5'
-save_model_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\ModelStorage\model_2day.pth'
+samples_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\Samples\model_train_test_{}day.h5'.format(Config.pred_len_day)
+save_model_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\LSTM\ModelStorage\model_{}day.pth'.format(Config.pred_len_day)
 
 # 读取样本
 with h5py.File(samples_path, 'r') as f:
@@ -58,9 +58,9 @@ show_samples_info(train_x.shape, train_y.shape, train_ix=train_ix)
 
 # 模型训练准备
 model = LSTMModelFuture(feature_size, output_size=Config.pred_len_day).to(Config.DEVICE)  # 创建模型
-summary(model, input_data=(210, 7))  # 输出模型结构
+summary(model, input_data=(Config.seq_len_day, Config.feature_size))  # 输出模型结构
 criterion = nn.MSELoss()  # 损失函数
-optimizer = torch.optim.Adam(model.parameters(), lr=Config.lr) # 优化器
+optimizer = torch.optim.Adam(model.parameters(), lr=Config.lr)  # 优化器
 # 训练模型
 loss_epochs = []
 pbar = tqdm.tqdm(range(Config.num_epochs))
@@ -81,8 +81,8 @@ with torch.no_grad():
         # 预测
         temp_ix = train_ix[train_ix['站名'] == station_name][[x for x in train_ix.columns if x != '站名']]
         temp_x = train_x[train_ix['站名'] == station_name].to(Config.DEVICE)
-        temp_y_obs = train_y[train_ix['站名'] == station_name].squeeze()
-        temp_y_pred = model(temp_x).detach().cpu().numpy().squeeze()
+        temp_y_obs = train_y[train_ix['站名'] == station_name]
+        temp_y_pred = model(temp_x).detach().cpu().numpy()
         temp_y_pred[temp_y_pred < 0] = 0  # 负数替换为0
         # 反归一化
         scalers = joblib.load(Config.scalers_path)
@@ -99,21 +99,26 @@ with torch.no_grad():
         print('训练集评估结果--站名: {}; R2: {:0.2}; RMSE: {:0.2}; NSE: {:0.2}'.format(station_name, r2, rmse, nse))
         # 绘制
         # 合并重叠部分(简单均值)
-        combined_obss =
-        combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
-        counts = np.zeros_like(combined_preds)
-        for ix, line in enumerate(temp_y_pred):
-            combined_preds[ix:ix+Config.pred_len_day] += line
-            counts[ix:ix+Config.pred_len_day] += 1
-        combined_preds /= counts
+        temp_y_pred = pd.DataFrame(temp_y_pred)
+        for ix in range(temp_y_pred.shape[1]):
+            temp_y_pred[ix] = temp_y_pred[ix].shift(ix)
+        temp_y_pred = np.nanmean(temp_y_pred, axis=1)
+        temp_y_obs = temp_y_obs[:, 0]  # 直接取第一列即可
+        temp_ix = temp_ix['0_date']
+        # combined_preds = np.zeros(temp_y_pred.shape[0] + Config.pred_len_day - 1)
+        # counts = np.zeros_like(combined_preds)
+        # for ix, line in enumerate(temp_y_pred):
+        #     combined_preds[ix:ix+Config.pred_len_day] += line
+        #     counts[ix:ix+Config.pred_len_day] += 1
+        # combined_preds /= counts
+        #
+        # combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
+        # counts = np.zeros_like(combined_obss)
+        # for ix, line in enumerate(temp_y_obs):
+        #     combined_obss[ix:ix + Config.pred_len_day] += line
+        #     counts[ix:ix + Config.pred_len_day] += 1
+        # combined_obss /= counts
 
-        combined_obss = np.zeros(temp_y_obs.shape[0] + Config.pred_len_day - 1)
-        counts = np.zeros_like(combined_obss)
-        for ix, line in enumerate(temp_y_obs):
-            combined_obss[ix:ix + Config.pred_len_day] += line
-            counts[ix:ix + Config.pred_len_day] += 1
-        combined_obss /= counts
-
-        save_path = os.path.join(Config.Assets_charts_dir, 'pred_real_train_{}.png'.format(station_name))
-        plot_comparison(temp_ix.loc[:, '0_date'], combined_obss[:-1], combined_preds[:-1], station_name, save_path=save_path)
+        save_path = os.path.join(Config.Assets_charts_dir, 'pred_obs_train_{}.png'.format(station_name))
+        plot_comparison(temp_ix, temp_y_obs, temp_y_pred, station_name, save_path=save_path)
 print('模型训练结束.')
