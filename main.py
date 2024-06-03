@@ -16,7 +16,7 @@ import tqdm
 import time
 
 start_time = time.time()
-memory_days = np.arange(150, 380, 20)  # 生成记忆期列表
+memory_days = np.arange(150, 300, 20)  # 生成记忆期列表
 predict_days = np.arange(1, 15)  # 生成预见期列表
 
 if __name__ == '__main__':
