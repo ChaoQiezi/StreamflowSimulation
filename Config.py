@@ -40,9 +40,7 @@ feature_size = len(feature_names)
 # 数据集划分相关
 split_time = datetime(2014, 1, 1)  # 数据集的划分时间节点
 seq_len_day = 210  # 记忆时间(时间分辨率: day)
-pred_len_day = 6  # 预见期(day)
-# seq_len_hour = 96  # 记忆时间(时间分辨率: hour)
-# pred_len_hour = 1  # 预见期(hour)
+pred_len_day = 1  # 预见期(day)
 
 # 模型相关
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'  # 是否有显卡并加速模型训练
