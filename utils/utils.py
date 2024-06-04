@@ -140,7 +140,7 @@ def generate_samples(df, x_col_names: list, y_col_name: Union[str, list], out_pa
     print(f'model{model_fix} 样本数据已经生成.')
 
 
-def normalize_xy(train_ds, test_ds, x_names: list, y_name: list, scaler_path='', model_fix=None):
+def normalize_xy(train_ds, test_ds, x_names: list, y_name: list, scaler_path='', model_fix=''):
     """
     对训练集和测试集分别进行X和Y的标准化
     :param train_ds: 训练集

@@ -8,7 +8,6 @@ This script is used to 从time_series_processing.py预处理好的时间序列�
 """
 
 import os
-import h5py
 import pandas as pd
 from utils.utils import generate_samples  # 生成样本
 import Config
