@@ -43,5 +43,5 @@ def generate_time_series_samples(seq_len_day=210, pred_len_day=1):
 
 
 if __name__ == '__main__':
-    generate_time_series_samples()
+    generate_time_series_samples(210, 1)
 

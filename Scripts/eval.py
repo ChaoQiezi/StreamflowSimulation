@@ -21,7 +21,7 @@ import pandas as pd
 import torch
 
 
-def eval(seq_len_day=210, pred_len_day=1):
+def eval(seq_len_day=Config.seq_len_day, pred_len_day=Config.pred_len_day):
     """
     模型预测和评估
     :param seq_len_day: 记忆期

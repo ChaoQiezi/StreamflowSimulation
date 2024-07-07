@@ -17,12 +17,13 @@ import time
 
 start_time = time.time()
 # 记忆期和预见期参考: 考虑记忆时间的LSTM模型在赣江流域径流预报中的应用_胡乐怡.pdf
-memory_days = [210]
+# memory_days = [190, 210, 230, 250]
+memory_days = [211]
 """
 似乎论文均使用过去210天的样本作为输入
 (基于先前研究，且考虑到流域径流形成过程，积雪形成消融周期约为7个月，并经过多次调整序列长度实验，序列长度设定为 210)
 """
-predict_days = [1, 2, 3, 4, 5, 7, 14, 21]
+predict_days = [1]
 # memory_days = np.arange(150, 300, 20)  # 生成记忆期列表
 # predict_days = np.arange(1, 15)  # 生成预见期列表
 

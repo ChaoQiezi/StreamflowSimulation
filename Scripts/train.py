@@ -40,7 +40,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.metrics import r2_score, mean_squared_log_error
 
 
-def train(seq_len_day=210, pred_len_day=1):
+def train(seq_len_day=Config.seq_len_day, pred_len_day=Config.pred_len_day):
     """
     模型训练
     :param seq_len_day: 记忆期

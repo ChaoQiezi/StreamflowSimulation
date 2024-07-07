@@ -7,91 +7,38 @@
 This script is used to 存放临时无效代码
 """
 
-import numpy as np
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import LSTM, Dense
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-
-# 生成数据
-np.random.seed(0)
-time_steps = np.linspace(0, 8 * np.pi, 800)
-data = np.sin(time_steps) + np.random.normal(size=len(time_steps)) * 0.5
-
-# 数据归一化
-scaler = MinMaxScaler(feature_range=(0, 1))
-data = scaler.fit_transform(data.reshape(-1, 1)).flatten()
-
-# 创建数据窗口
-def create_dataset(data, n_steps_in, n_steps_out):
-    X, y = [], []
-    for i in range(len(data) - n_steps_in - n_steps_out + 1):
-        X.append(data[i:(i + n_steps_in)])
-        y.append(data[(i + n_steps_in):(i + n_steps_in + n_steps_out)])
-    return np.array(X), np.array(y)
-
-n_steps_in, n_steps_out = 7, 2
-X, y = create_dataset(data, n_steps_in, n_steps_out)
-
-# 划分训练和测试数据集
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
-X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
-
-# 构建模型
-model = Sequential([
-    LSTM(50, activation='relu', input_shape=(n_steps_in, 1)),
-    Dense(n_steps_out)
-])
-
-model.compile(optimizer='adam', loss='mse')
-
-# 训练模型
-model.fit(X_train, y_train, epochs=30, verbose=1)
-
-# 进行预测
-yhat = model.predict(X_test[:1])
-print("Predicted values:", yhat)
-print("True values:", y_test[:1])
-
-
-
-import matplotlib.pyplot as plt
-
-# 进行预测
-y_pred = model.predict(X_test)
-
-import matplotlib.pyplot as plt
+import os.path
+import Config
+import pandas as pd
 import numpy as np
 
-# 假设y_pred是模型的预测输出，形状为(300, 2)
-# 假设y_test是测试数据的实际输出，形状为(300, 2)
+# 打乱数据集后分享
+era5_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\ERA5\Era5_2010_2015.xlsx'
+rainfall_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\模拟资料\尼洋河数据\Rainfall.xlsx'
+streamflow_path = r'H:\Datasets\Objects\StreamflowSimulation\Data\模拟资料\尼洋河数据\Streamflow.xlsx'
+out_dir = Config.Assets_dir
+st_names = ['巴河桥', '更张', '工布江达']
+feature_names = ['气温', '降水', '气压', '相对湿度', '风速', '风向', '日照', '地温', '蒸发']
 
-# 首先，我们需要从每个样本的预测中提取连续的时间序列
-continuous_pred = np.zeros((y_pred.shape[0] + y_pred.shape[1] - 1, ))
-continuous_true = np.zeros((y_test.shape[0] + y_test.shape[1] - 1, ))
-
-# 填充预测和真实值的连续时间序列
-for i in range(y_pred.shape[0]):
-    continuous_pred[i:i + y_pred.shape[1]] += y_pred[i]
-    continuous_true[i:i + y_test.shape[1]] += y_test[i]
-
-# 简化版：只将重叠的预测平均处理
-overlap_count = np.full((len(continuous_pred),), 1)  # 计算重叠次数
-for i in range(1, y_pred.shape[1]):
-    overlap_count[i:-i] += 1
-
-continuous_pred /= overlap_count
-continuous_true /= overlap_count
-
-# 绘制连续的时间序列预测图
-plt.figure(figsize=(15, 6))
-plt.plot(continuous_true, label='True Values', marker='o')
-plt.plot(continuous_pred, label='Predictions', marker='x', linestyle='--')
-plt.title('Continuous Time Series Prediction')
-plt.xlabel('Time Steps')
-plt.ylabel('Predicted/True Value')
-plt.legend()
-plt.show()
-
+for process_path in [era5_path, rainfall_path, streamflow_path]:
+    write_path = os.path.join(out_dir, 'random_' + os.path.basename(process_path))
+    # if not os.path.exists(write_path):
+    with pd.ExcelWriter(write_path, mode='w') as writer:
+        pd.DataFrame().to_excel(writer)
+# 读取
+for st_name in st_names:
+    with pd.ExcelWriter(os.path.join(out_dir, 'random_' + os.path.basename(era5_path)), mode='a') as writer:
+        era5_df = pd.read_excel(era5_path)
+        process_columns = era5_df.loc[:, '气温':].columns
+        era5_df[process_columns] = era5_df[process_columns].sample(frac=1).reset_index(drop=True)
+        era5_df.to_excel(writer, sheet_name=st_name)
+    with pd.ExcelWriter(os.path.join(out_dir, 'random_' + os.path.basename(rainfall_path)), mode='a') as writer:
+        rainfall_df = pd.read_excel(rainfall_path)
+        process_columns = rainfall_df.loc[:, '降水量':].columns
+        rainfall_df[process_columns] = rainfall_df[process_columns].sample(frac=1).reset_index(drop=True)
+        rainfall_df.to_excel(writer, sheet_name=st_name)
+    with pd.ExcelWriter(os.path.join(out_dir, 'random_' + os.path.basename(streamflow_path)), mode='a') as writer:
+         streamflow_df = pd.read_excel(streamflow_path)
+         process_columns = streamflow_df.loc[:, '平均流量':].columns
+         streamflow_df[process_columns] = streamflow_df[process_columns].sample(frac=1).reset_index(drop=True)
+         streamflow_df.to_excel(writer, sheet_name=st_name)
